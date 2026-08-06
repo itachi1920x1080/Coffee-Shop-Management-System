@@ -1,20 +1,25 @@
 from fastapi import FastAPI, Depends
-# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 from app.db.database import engine, Base, get_db
-from app.models import user as model_user, category as model_category, menu as model_menu
 
-# Import our routers
-from app.api.routes import auth, category as category_route, menu as menu_route
+# 1. Import Models (ដើម្បីឲ្យ SQLAlchemy បង្កើតតារាង)
+from app.models import user, category, menu, table
+
+# 2. Import Routers (បំបែកមួយជួរៗដើម្បីកុំឲ្យច្រឡំ)
+from app.api.routes import auth
+from app.api.routes import category as category_route
+from app.api.routes import menu as menu_route
+from app.api.routes import table as table_route 
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Coffee Shop API")
 
-# Register the auth router
+# 3. Register Routers បញ្ចូលទៅក្នុងកម្មវិធី
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(category_route.router, prefix="/categories", tags=["Categories"])
 app.include_router(menu_route.router, prefix="/menus", tags=["Menus"]) 
+app.include_router(table_route.router, prefix="/tables", tags=["Tables"])
 
 @app.get("/")
 def read_root():
