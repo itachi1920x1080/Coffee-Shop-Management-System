@@ -10,6 +10,7 @@ from app.api.routes import auth
 from app.api.routes import category as category_route
 from app.api.routes import menu as menu_route
 from app.api.routes import table as table_route 
+from app.api.routes import customer as customer_route
 
 Base.metadata.create_all(bind=engine)
 
@@ -20,7 +21,7 @@ app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(category_route.router, prefix="/categories", tags=["Categories"])
 app.include_router(menu_route.router, prefix="/menus", tags=["Menus"]) 
 app.include_router(table_route.router, prefix="/tables", tags=["Tables"])
-
+app.include_router(customer_route.router, prefix="/customers", tags=["Customers"])
 @app.get("/")
 def read_root():
     return {"message": "Coffee Shop API Running"}
