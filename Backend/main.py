@@ -12,6 +12,7 @@ from app.api.routes import table as table_route
 from app.api.routes import customer as customer_route
 from app.api.routes import order as order_route
 from app.api.routes import payment as payment_route # បន្ថែម payment router
+from app.api.routes import receipt as receipt_route # បន្ថែមបន្ទាត់នេះ
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Coffee Shop API")
@@ -24,6 +25,7 @@ app.include_router(table_route.router, prefix="/tables", tags=["Tables"])
 app.include_router(customer_route.router, prefix="/customers", tags=["Customers"])
 app.include_router(order_route.router, prefix="/orders", tags=["Orders"])
 app.include_router(payment_route.router, prefix="/payments", tags=["Payments"])
+app.include_router(receipt_route.router, prefix="/receipts", tags=["Receipts"])
 
 @app.get("/")
 def read_root():
