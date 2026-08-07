@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from app.models.order import Order, OrderItem
 from app.models.customer import Customer
 from app.models.menu import Menu
+from app.models.expense import Expense
 from app.schemas.dashboard import DashboardMetricsResponse, BestSellingMenu
 
 def get_dashboard_metrics(db: Session) -> DashboardMetricsResponse:
@@ -26,6 +27,12 @@ def get_dashboard_metrics(db: Session) -> DashboardMetricsResponse:
 
     # 3. រាប់ចំនួនអតិថិជនសរុប
     total_customers = db.query(Customer).count()
+
+    # 3.1 បូកសរុបការចំណាយថ្ងៃនេះ (Today's Expenses)
+    today_expenses_result = db.query(func.sum(Expense.amount)).filter(
+        cast(Expense.created_at, Date) == today
+    ).scalar()
+    today_expenses = today_expenses_result if today_expenses_result else 0.0
 
     # 4. រកមុខម្ហូបដែលលក់ដាច់ជាងគេ
     best_item_query = db.query(
@@ -49,12 +56,15 @@ def get_dashboard_metrics(db: Session) -> DashboardMetricsResponse:
                 total_quantity_sold=total_qty
             )
 
+    # 5. គណនាប្រាក់ចំណេញសុទ្ធ (Net Profit = ចំណូលថ្ងៃនេះ - ចំណាយថ្ងៃនេះ)
+    net_profit = today_income - today_expenses
+
     # បញ្ជូនទិន្នន័យទាំងអស់ត្រលប់ទៅវិញ
     return DashboardMetricsResponse(
         today_orders_count=today_orders_count,
         today_income=today_income,
         total_customers=total_customers,
-        total_expenses=0.0, # ទុកសិនរង់ចាំជំហាន Expense
-        net_profit=today_income, # បច្ចុប្បន្ន ចំណេញ = ចំណូល
+        total_expenses=today_expenses, # ដាក់តម្លៃពិតប្រាកដ
+        net_profit=net_profit,          # ប្រាក់ចំណេញពិតប្រាកដ
         best_selling_menu=best_selling_menu
     )

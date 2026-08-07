@@ -12,8 +12,10 @@ from app.api.routes import menu as menu_route
 from app.api.routes import table as table_route 
 from app.api.routes import customer as customer_route
 from app.api.routes import order as order_route
+from app.api.routes import payment as payment_route
 from app.api.routes import receipt as receipt_route 
 from app.api.routes import dashboard as dashboard_route # បន្ថែម dashboard
+from app.api.routes import expense as expense_route
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Coffee Shop API")
@@ -44,7 +46,7 @@ app.include_router(order_route.router, prefix="/orders", tags=["Orders"])
 app.include_router(payment_route.router, prefix="/payments", tags=["Payments"])
 app.include_router(receipt_route.router, prefix="/receipts", tags=["Receipts"])
 app.include_router(dashboard_route.router, prefix="/dashboard", tags=["Dashboard"])
-
+app.include_router(expense_route.router, prefix="/expenses", tags=["Expenses"])
 @app.get("/")
 def read_root():
     return {"message": "Coffee Shop API Running"}
