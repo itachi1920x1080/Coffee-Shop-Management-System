@@ -26,6 +26,7 @@ export default function Menus() {
   const [suggestedProducts, setSuggestedProducts] = useState([]);
   const [selectedSuggestedProducts, setSelectedSuggestedProducts] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [categoryFormData, setCategoryFormData] = useState({
     name: '', description: ''
@@ -328,6 +329,34 @@ export default function Menus() {
     }
   };
 
+  const handleGenerateDescription = async (type) => {
+    const nameToUse = type === 'menu' ? menuFormData.name : categoryFormData.name;
+    if (!nameToUse) {
+      alert(`Please enter a ${type} name first to generate a description.`);
+      return;
+    }
+    
+    setIsGeneratingDesc(true);
+    try {
+      const response = await api.post('/ai/generate-description', { 
+        name: nameToUse,
+        type: type
+      });
+      const generatedDesc = response.data.description;
+      
+      if (type === 'menu') {
+        setMenuFormData(prev => ({...prev, description: generatedDesc}));
+      } else {
+        setCategoryFormData(prev => ({...prev, description: generatedDesc}));
+      }
+    } catch (error) {
+      console.error('Error generating description:', error);
+      alert('Failed to generate description with AI. ' + (error.response?.data?.detail || ''));
+    } finally {
+      setIsGeneratingDesc(false);
+    }
+  };
+
   const handleDeleteMenu = async (id) => {
     if (window.confirm('តើអ្នកពិតជាចង់លុបមុខម្ហូបនេះមែនទេ?')) {
       try {
@@ -499,7 +528,17 @@ export default function Menus() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                  <button 
+                    type="button" 
+                    onClick={() => handleGenerateDescription('menu')}
+                    disabled={isGeneratingDesc || !menuFormData.name}
+                    className="text-xs flex items-center gap-1 text-orange-600 hover:text-orange-700 font-medium disabled:opacity-50"
+                  >
+                    {isGeneratingDesc ? <div className="w-3 h-3 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div> : '✨'} Generate AI
+                  </button>
+                </div>
                 <textarea rows="3" className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={menuFormData.description} onChange={(e) => setMenuFormData({...menuFormData, description: e.target.value})}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
@@ -525,7 +564,17 @@ export default function Menus() {
                 <input type="text" className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={categoryFormData.name} onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                  <button 
+                    type="button" 
+                    onClick={() => handleGenerateDescription('category')}
+                    disabled={isGeneratingDesc || !categoryFormData.name}
+                    className="text-xs flex items-center gap-1 text-orange-600 hover:text-orange-700 font-medium disabled:opacity-50"
+                  >
+                    {isGeneratingDesc ? <div className="w-3 h-3 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div> : '✨'} Generate AI
+                  </button>
+                </div>
                 <textarea rows="3" className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={categoryFormData.description} onChange={(e) => setCategoryFormData({...categoryFormData, description: e.target.value})}></textarea>
               </div>
 

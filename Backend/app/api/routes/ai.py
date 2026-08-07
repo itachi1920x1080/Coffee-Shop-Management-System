@@ -45,3 +45,32 @@ def generate_menu_items(data: AIGenerateRequest):
         return {"items": items}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate AI items: {str(e)}")
+
+
+class AIDescriptionRequest(BaseModel):
+    name: str
+    type: str # "category" or "menu"
+
+@router.post("/generate-description")
+def generate_description(data: AIDescriptionRequest):
+    try:
+        api_key = settings.GEMINI_API_KEY
+        if not api_key:
+             raise HTTPException(status_code=500, detail="Gemini API Key is not configured on the server.")
+        
+        client = genai.Client(api_key=api_key)
+        
+        shop_context = "You are a professional copywriter for a coffee shop. Write a short, appetizing, and appealing description (maximum 2 sentences) for the given item. Keep it concise."
+        prompt = f"Write a description for a coffee shop {data.type} named '{data.name}'."
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=shop_context,
+                temperature=0.7
+            )
+        )
+        return {"description": response.text.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate description: {str(e)}")
