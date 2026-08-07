@@ -57,6 +57,7 @@ DATABASE_URL="mysql+pymysql://root:@localhost:3306/coffee_shop_db"
 SECRET_KEY="my_super_secret_key_change_this_later"
 ALGORITHM="HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+GEMINI_API_KEY="your_google_gemini_api_key_here"
 ```
 
 ### 5. ដំណើរការ Server
@@ -122,6 +123,7 @@ export default api;
 
 * **Auth:** សម្រាប់ចុះឈ្មោះ និងចូលប្រើប្រាស់។
 * **Categories & Menus:** គ្រប់គ្រងមុខម្ហូប និងរូបភាព។
+* **AI Features:** បង្កើតឈ្មោះផលិតផលថ្មីៗដោយស្វ័យប្រវត្តិជាមួយ Google Gemini AI និងបង្កើតរូបភាពដោយស្វ័យប្រវត្តិ។
 * **Tables:** គ្រប់គ្រងតុ និងស្ថានភាព (Available, Occupied, Reserved)។
 * **Customers:** គ្រប់គ្រងអតិថិជន និងរាប់ចំនួនដងនៃការទិញ (Visits)។
 * **Orders:** បង្កើតបញ្ជាទិញ (គណនាតម្លៃសរុបដោយស្វ័យប្រវត្តិ)។
