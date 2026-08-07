@@ -28,7 +28,23 @@ export default function POS() {
           api.get('/categories/')
         ]);
         setMenus(menusRes.data);
-        setCategories(categoriesRes.data);
+        
+        const recommendedOrder = [
+          "Hot Coffee", "Iced Coffee", "Tea", "Bubble Tea", "Milk Drinks", 
+          "Chocolate Drinks", "Juice", "Smoothies", "Frappes", "Soft Drinks", 
+          "Water", "Specialty Drinks"
+        ];
+        
+        const sortedCategories = categoriesRes.data.sort((a, b) => {
+          const indexA = recommendedOrder.indexOf(a.name);
+          const indexB = recommendedOrder.indexOf(b.name);
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+        setCategories(sortedCategories);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {

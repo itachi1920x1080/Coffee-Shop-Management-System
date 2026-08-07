@@ -41,16 +41,30 @@ export default function Menus() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const recommendedOrder = [
+        "Hot Coffee", "Iced Coffee", "Tea", "Bubble Tea", "Milk Drinks", 
+        "Chocolate Drinks", "Juice", "Smoothies", "Frappes", "Soft Drinks", 
+        "Water", "Specialty Drinks"
+      ];
+      const sortCats = (cats) => cats.sort((a, b) => {
+        const indexA = recommendedOrder.indexOf(a.name);
+        const indexB = recommendedOrder.indexOf(b.name);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
       if (activeTab === 'menus') {
         const [menusRes, categoriesRes] = await Promise.all([
           api.get('/menus/'),
           api.get('/categories/')
         ]);
         setMenus(menusRes.data);
-        setCategories(categoriesRes.data);
+        setCategories(sortCats(categoriesRes.data));
       } else {
         const res = await api.get('/categories/');
-        setCategories(res.data);
+        setCategories(sortCats(res.data));
       }
     } catch (error) {
       console.error('Error fetching data:', error);
