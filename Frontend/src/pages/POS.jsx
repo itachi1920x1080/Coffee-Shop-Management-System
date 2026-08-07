@@ -14,6 +14,7 @@ export default function POS() {
   // States សម្រាប់ផ្ទាំង Checkout Modal
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [amountReceived, setAmountReceived] = useState('');
+  const [receivedCurrency, setReceivedCurrency] = useState('USD');
   const [isProcessing, setIsProcessing] = useState(false);
   const [qrString, setQrString] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -69,7 +70,15 @@ export default function POS() {
   };
 
   const totalAmount = cart.reduce((total, item) => total + item.price * (parseInt(item.quantity) || 0), 0);
-  const changeAmount = (parseFloat(amountReceived) || 0) - totalAmount;
+  
+  const EXCHANGE_RATE = 4100;
+  let receivedInUSD = 0;
+  if (amountReceived) {
+      receivedInUSD = receivedCurrency === 'KHR' 
+        ? parseFloat(amountReceived) / EXCHANGE_RATE 
+        : parseFloat(amountReceived);
+  }
+  const changeAmount = receivedInUSD - totalAmount;
 
   // Generate KHQR when Checkout opens
   useEffect(() => {
@@ -325,15 +334,36 @@ export default function POS() {
             {paymentMethod === 'cash' && (
               <>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount Received ($)</label>
-                  <input 
-                    type="number" 
-                    autoFocus
-                    className="w-full text-2xl p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                    value={amountReceived}
-                    onChange={(e) => setAmountReceived(e.target.value)}
-                    placeholder="0.00"
-                  />
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Amount Received</label>
+                    <div className="flex bg-gray-200 rounded-lg p-1">
+                      <button 
+                        onClick={() => setReceivedCurrency('USD')}
+                        className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${receivedCurrency === 'USD' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+                      >
+                        USD ($)
+                      </button>
+                      <button 
+                        onClick={() => setReceivedCurrency('KHR')}
+                        className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${receivedCurrency === 'KHR' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+                      >
+                        KHR (៛)
+                      </button>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold text-xl">
+                      {receivedCurrency === 'USD' ? '$' : '៛'}
+                    </span>
+                    <input 
+                      type="number" 
+                      autoFocus
+                      className={`w-full text-2xl p-3 ${receivedCurrency === 'USD' ? 'pl-8' : 'pl-10'} border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none`}
+                      value={amountReceived}
+                      onChange={(e) => setAmountReceived(e.target.value)}
+                      placeholder="0.00"
+                    />
+                  </div>
                 </div>
 
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
@@ -343,7 +373,7 @@ export default function POS() {
                   </span>
                   {changeAmount > 0 && (
                     <span className="block text-sm text-gray-500 mt-1">
-                      ≈ {(changeAmount * 4100).toLocaleString()} ៛ (KHR)
+                      ≈ {(changeAmount * EXCHANGE_RATE).toLocaleString()} ៛ (KHR)
                     </span>
                   )}
                 </div>
