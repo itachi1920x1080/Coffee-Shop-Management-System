@@ -9,9 +9,17 @@ class OrderItemBase(BaseModel):
 class OrderItemCreate(OrderItemBase):
     pass
 
+class OrderItemMenu(BaseModel):
+    name: str
+    price: float
+
+    class Config:
+        from_attributes = True
+
 class OrderItemResponse(OrderItemBase):
     id: int
     subtotal: float
+    menu: Optional[OrderItemMenu] = None
 
     class Config:
         from_attributes = True

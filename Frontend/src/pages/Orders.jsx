@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { Search, FileText, CheckCircle, Clock } from 'lucide-react';
+import { Search, FileText, CheckCircle, Clock, Printer } from 'lucide-react';
+import InvoiceModal from '../components/InvoiceModal';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -63,6 +65,7 @@ export default function Orders() {
                   <th className="p-4 font-medium">Items</th>
                   <th className="p-4 font-medium">Status</th>
                   <th className="p-4 font-medium text-right">Total Amount</th>
+                  <th className="p-4 font-medium text-center">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -97,6 +100,15 @@ export default function Orders() {
                       <td className="p-4 font-bold text-orange-600 text-right">
                         ${order.total_amount?.toFixed(2) || '0.00'}
                       </td>
+                      <td className="p-4 text-center">
+                        <button 
+                          onClick={() => setSelectedOrderForInvoice(order)}
+                          className="p-2 text-gray-500 hover:text-orange-600 bg-gray-100 hover:bg-orange-50 rounded-lg transition-colors inline-flex items-center gap-1 text-sm font-medium"
+                          title="Print Invoice"
+                        >
+                          <Printer size={16} /> Print
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -105,6 +117,13 @@ export default function Orders() {
           )}
         </div>
       </div>
+      
+      {selectedOrderForInvoice && (
+        <InvoiceModal 
+          order={selectedOrderForInvoice} 
+          onClose={() => setSelectedOrderForInvoice(null)} 
+        />
+      )}
     </div>
   );
 }

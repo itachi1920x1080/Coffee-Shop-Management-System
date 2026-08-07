@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { ShoppingCart, Plus, Minus, Trash2, X, Search } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, X, Search, Printer } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { BakongKHQR, khqrData, IndividualInfo } from 'bakong-khqr';
+import InvoiceModal from '../components/InvoiceModal';
 
 export default function POS() {
   const [menus, setMenus] = useState([]);
@@ -19,6 +20,7 @@ export default function POS() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [qrString, setQrString] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [completedOrder, setCompletedOrder] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -159,11 +161,14 @@ export default function POS() {
       };
       await api.post('/payments/', paymentData);
 
-      // ៣. បង្ហាញសារជោគជ័យ និងជម្រះកន្ត្រក
-      alert("ទូទាត់ប្រាក់ជោគជ័យ! (Payment Successful!)");
+      // ៣. Fetch the full order details for the invoice
+      const orderDetails = await api.get(`/orders/${orderId}`);
+
+      // ៤. បង្ហាញសារជោគជ័យ និងជម្រះកន្ត្រក
       setCart([]);
       setIsCheckoutOpen(false);
       setAmountReceived('');
+      setCompletedOrder(orderDetails.data);
       
     } catch (error) {
       console.error('Checkout failed:', error);
@@ -421,6 +426,14 @@ export default function POS() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Invoice Modal for Completed Orders */}
+      {completedOrder && (
+        <InvoiceModal 
+          order={completedOrder} 
+          onClose={() => setCompletedOrder(null)} 
+        />
       )}
     </div>
   );
