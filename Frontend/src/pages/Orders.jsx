@@ -5,6 +5,7 @@ import { Search, FileText, CheckCircle, Clock } from 'lucide-react';
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchOrders();
@@ -24,6 +25,10 @@ export default function Orders() {
     }
   };
 
+  const filteredOrders = orders.filter(order => 
+    order.order_number.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-6">
@@ -37,6 +42,8 @@ export default function Orders() {
             <input 
               type="text" 
               placeholder="Search by Order Number..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
             />
           </div>
@@ -59,14 +66,14 @@ export default function Orders() {
                 </tr>
               </thead>
               <tbody>
-                {orders.length === 0 ? (
+                {filteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="p-8 text-center text-gray-500">
                       មិនទាន់មានទិន្នន័យការកម្ម៉ង់ទេ (No orders recorded yet)
                     </td>
                   </tr>
                 ) : (
-                  orders.map((order) => (
+                  filteredOrders.map((order) => (
                     <tr key={order.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
                       <td className="p-4 font-medium text-gray-800 flex items-center gap-2">
                         <FileText size={16} className="text-gray-400" /> {order.order_number}

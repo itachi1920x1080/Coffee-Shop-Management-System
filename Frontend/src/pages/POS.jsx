@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { ShoppingCart, Plus, Minus, Trash2, X } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, X, Search } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { BakongKHQR, khqrData, IndividualInfo } from 'bakong-khqr';
 
@@ -10,6 +10,7 @@ export default function POS() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // States សម្រាប់ផ្ទាំង Checkout Modal
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -37,9 +38,11 @@ export default function POS() {
     fetchData();
   }, []);
 
-  const filteredMenus = selectedCategory === 'All' 
-    ? menus 
-    : menus.filter(menu => menu.category?.name === selectedCategory);
+  const filteredMenus = menus.filter(menu => {
+    const matchesCategory = selectedCategory === 'All' || menu.category?.name === selectedCategory;
+    const matchesSearch = menu.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const addToCart = (menu) => {
     setCart((prevCart) => {
@@ -158,7 +161,19 @@ export default function POS() {
     <div className="flex h-full gap-6 relative">
       {/* ផ្នែកខាងឆ្វេង៖ បញ្ជីមុខម្ហូប */}
       <div className="flex-1 flex flex-col">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Point of Sale</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Point of Sale</h1>
+          <div className="relative max-w-sm w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input 
+              type="text" 
+              placeholder="Search products..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:bg-white focus:outline-none transition-colors"
+            />
+          </div>
+        </div>
         
         {/* Category Navigation Bar */}
         <div className="flex gap-2 overflow-x-auto pb-4 mb-2">

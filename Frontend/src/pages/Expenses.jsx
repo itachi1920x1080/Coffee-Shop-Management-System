@@ -5,6 +5,7 @@ import { Plus, Edit, Trash2, X, Search, DollarSign } from 'lucide-react';
 export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // States សម្រាប់ Modal បន្ថែម/កែប្រែចំណាយ
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,6 +92,11 @@ export default function Expenses() {
     }
   };
 
+  const filteredExpenses = expenses.filter(expense => 
+    expense.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    expense.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-6">
@@ -110,6 +116,8 @@ export default function Expenses() {
             <input 
               type="text" 
               placeholder="Search expenses..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
             />
           </div>
@@ -132,14 +140,14 @@ export default function Expenses() {
                 </tr>
               </thead>
               <tbody>
-                {expenses.length === 0 ? (
+                {filteredExpenses.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="p-8 text-center text-gray-500">
                       មិនទាន់មានទិន្នន័យចំណាយទេ (No expenses recorded yet)
                     </td>
                   </tr>
                 ) : (
-                  expenses.map((expense) => (
+                  filteredExpenses.map((expense) => (
                     <tr key={expense.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
                       <td className="p-4 text-gray-500">
                         {new Date(expense.created_at).toLocaleDateString()}
