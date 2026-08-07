@@ -9,6 +9,7 @@ export default function Menus() {
   const [loading, setLoading] = useState(true);
   const [menuSearchQuery, setMenuSearchQuery] = useState('');
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   // States for Menu Modal
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
@@ -367,8 +368,9 @@ export default function Menus() {
   };
 
   const filteredMenus = menus.filter(menu => 
-    menu.name.toLowerCase().includes(menuSearchQuery.toLowerCase()) || 
-    (menu.category?.name || '').toLowerCase().includes(menuSearchQuery.toLowerCase())
+    (selectedCategory === 'All' || menu.category?.name === selectedCategory) &&
+    (menu.name.toLowerCase().includes(menuSearchQuery.toLowerCase()) || 
+    (menu.category?.name || '').toLowerCase().includes(menuSearchQuery.toLowerCase()))
   );
 
   const filteredCategories = categories.filter(category => 
@@ -398,14 +400,42 @@ export default function Menus() {
 
       {activeTab === 'menus' ? (
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden flex-1 flex flex-col">
-          <div className="p-4 border-b bg-gray-50 flex items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input type="text" placeholder="Search menus..." value={menuSearchQuery} onChange={(e) => setMenuSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none" />
+          <div className="p-4 border-b bg-gray-50 flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input type="text" placeholder="Search menus..." value={menuSearchQuery} onChange={(e) => setMenuSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none" />
+              </div>
+              <button onClick={() => openMenuModal()} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors font-medium">
+                <Plus size={20} /> Add Menu
+              </button>
             </div>
-            <button onClick={() => openMenuModal()} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors font-medium">
-              <Plus size={20} /> Add Menu
-            </button>
+            
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <button
+                onClick={() => setSelectedCategory('All')}
+                className={`px-4 py-2 rounded-full whitespace-nowrap font-medium transition-colors text-sm ${
+                  selectedCategory === 'All' 
+                    ? 'bg-orange-600 text-white shadow-md' 
+                    : 'bg-white text-gray-600 hover:bg-orange-100 border border-gray-200'
+                }`}
+              >
+                All
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.name)}
+                  className={`px-4 py-2 rounded-full whitespace-nowrap font-medium transition-colors text-sm ${
+                    selectedCategory === cat.name 
+                      ? 'bg-orange-600 text-white shadow-md' 
+                      : 'bg-white text-gray-600 hover:bg-orange-100 border border-gray-200'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex-1 overflow-auto">
             {loading ? (
