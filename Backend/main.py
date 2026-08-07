@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 from sqlalchemy.orm import Session
 from app.db.database import engine, Base, get_db
 
@@ -20,6 +22,10 @@ from app.api.routes import report as report_route
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Coffee Shop API")
+
+# Mount static files for image uploads
+os.makedirs("uploads/images", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # កំណត់ CORS (Cross-Origin Resource Sharing) ដើម្បីអនុញ្ញាតឲ្យ React Frontend អាចតភ្ជាប់មក Backend បាន
 origins = [
