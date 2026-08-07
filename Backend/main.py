@@ -19,6 +19,7 @@ from app.api.routes import receipt as receipt_route
 from app.api.routes import dashboard as dashboard_route # បន្ថែម dashboard
 from app.api.routes import expense as expense_route
 from app.api.routes import report as report_route
+from app.api.routes import ai as ai_route
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Coffee Shop API")
@@ -55,6 +56,7 @@ app.include_router(receipt_route.router, prefix="/receipts", tags=["Receipts"])
 app.include_router(dashboard_route.router, prefix="/dashboard", tags=["Dashboard"])
 app.include_router(expense_route.router, prefix="/expenses", tags=["Expenses"])
 app.include_router(report_route.router, prefix="/reports", tags=["Reports"])
+app.include_router(ai_route.router, prefix="/ai", tags=["AI Generation"])
 
 @app.get("/")
 def read_root():

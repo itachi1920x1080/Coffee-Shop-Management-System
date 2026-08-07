@@ -25,6 +25,8 @@ export default function Menus() {
   const [selectedImportCategory, setSelectedImportCategory] = useState("");
   const [suggestedProducts, setSuggestedProducts] = useState([]);
   const [selectedSuggestedProducts, setSelectedSuggestedProducts] = useState([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [categoryFormData, setCategoryFormData] = useState({
     name: '', description: ''
   });
@@ -176,16 +178,25 @@ export default function Menus() {
 
   const handleNextCategory = async (e) => {
     e.preventDefault();
+    if (!categoryFormData.name.trim()) {
+      alert('❌ Please complete all required fields.');
+      return;
+    }
+
     if (isCategoryEditMode) {
       try {
         await api.put(`/categories/${currentCategoryId}`, categoryFormData);
-        alert('កែប្រែប្រភេទជោគជ័យ!');
+        alert('✅ Category created successfully!');
         setIsCategoryModalOpen(false);
         setCategoryFormData({ name: '', description: '' });
         fetchData();
       } catch (error) {
         console.error('Error saving category:', error);
-        alert('មានបញ្ហាក្នុងការរក្សាទុកប្រភេទ។');
+        if (error.response?.status === 400 && error.response?.data?.detail?.includes('already exists')) {
+          alert('⚠️ Category already exists. Please choose another name.');
+        } else {
+          alert('❌ Failed to create category. Please try again.');
+        }
       }
     } else {
       // Calculate suggestions based on name
@@ -206,15 +217,28 @@ export default function Menus() {
       return;
     }
 
+    setIsCreatingCategory(true);
     try {
       // 1. Create the category first
-      const response = await api.post('/categories/', categoryFormData);
-      const newCategory = response.data;
+      let newCategory;
+      try {
+        const response = await api.post('/categories/', categoryFormData);
+        newCategory = response.data;
+      } catch (error) {
+        if (error.response?.status === 400 && error.response?.data?.detail?.includes('already exists')) {
+          alert('⚠️ Category already exists. Please choose another name.');
+        } else {
+          alert('❌ Failed to create category. Please try again.');
+        }
+        setIsCreatingCategory(false);
+        setIsCategoryOptionsModalOpen(false);
+        setIsCategoryModalOpen(true); // Let them fix the name
+        return;
+      }
       
       // 2. Handle specific options
       if (option === 'empty') {
          // Do nothing else
-         alert('បង្កើតប្រភេទជោគជ័យ!');
       } else if (option === 'generate') {
           if (selectedSuggestedProducts.length > 0) {
             await Promise.all(selectedSuggestedProducts.map(async (productName, index) => {
@@ -234,10 +258,10 @@ export default function Menus() {
                }
             }));
           }
-          alert('បង្កើតប្រភេទ និងបន្ថែមផលិតផលដែលបានជ្រើសរើសជោគជ័យ!');
       } else if (option === 'import') {
           if (!selectedImportCategory) {
               alert('សូមជ្រើសរើសប្រភេទដើមដើម្បី Import');
+              setIsCreatingCategory(false);
               return;
           }
           const menusToCopy = menus.filter(m => m.category_id === parseInt(selectedImportCategory));
@@ -256,16 +280,15 @@ export default function Menus() {
                           // Auto generate image if imported item had no image
                           await api.post(`/menus/${res.data.id}/generate-image?prompt=${encodeURIComponent(m.name)}`);
                       }
-                      // Note: Copying the exact image file would require a backend endpoint, 
-                      // so for now we either keep it without image or rely on the generation if it was missing.
                   } catch(err) {
                       console.error('Failed to import product/image:', err);
                   }
               }));
           }
-          alert(`បង្កើតប្រភេទ និង Import ផលិតផលបាន ${menusToCopy.length} មុខជោគជ័យ!`);
       } else if (option === 'manual') {
+          alert('✅ Category created successfully!');
           setIsCategoryOptionsModalOpen(false);
+          setIsCreatingCategory(false);
           setCategoryFormData({ name: '', description: '' });
           await fetchData();
           
@@ -274,6 +297,7 @@ export default function Menus() {
           return; 
       }
       
+      alert('✅ Category created successfully!');
       setIsCategoryOptionsModalOpen(false);
       setCategoryFormData({ name: '', description: '' });
       setSelectedImportCategory("");
@@ -283,14 +307,25 @@ export default function Menus() {
       
     } catch (error) {
       console.error('Error in category option:', error);
-      alert('មានបញ្ហាក្នុងការបង្កើតប្រភេទ។');
+      alert('❌ Failed to create category. Please try again.');
+    } finally {
+      setIsCreatingCategory(false);
     }
   };
 
-  const handleGenerateMore = () => {
-     const extras = [`Signature ${categoryFormData.name}`, `Premium ${categoryFormData.name}`, `Special ${categoryFormData.name}`];
-     setSuggestedProducts([...suggestedProducts, ...extras]);
-     setSelectedSuggestedProducts([...selectedSuggestedProducts, ...extras]);
+  const handleGenerateMore = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await api.post('/ai/generate-menu', { category: categoryFormData.name });
+      const extras = response.data.items;
+      setSuggestedProducts([...suggestedProducts, ...extras]);
+      setSelectedSuggestedProducts([...selectedSuggestedProducts, ...extras]);
+    } catch (error) {
+      console.error('Error generating AI items:', error);
+      alert('បរាជ័យក្នុងការបង្កើតដោយ AI (Failed to generate with AI). ' + (error.response?.data?.detail || ''));
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleDeleteMenu = async (id) => {
@@ -487,7 +522,7 @@ export default function Menus() {
             <form onSubmit={handleNextCategory} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                <input type="text" required className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={categoryFormData.name} onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})} />
+                <input type="text" className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={categoryFormData.name} onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
@@ -509,7 +544,7 @@ export default function Menus() {
       {isCategoryOptionsModalOpen && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 rounded-xl">
           <div className="bg-white p-6 rounded-xl shadow-lg w-[32rem] relative">
-            <button onClick={() => handleCategoryOption('cancel')} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"><X size={24} /></button>
+            <button onClick={() => handleCategoryOption('cancel')} disabled={isCreatingCategory} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"><X size={24} /></button>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">How to add products?</h2>
             <p className="text-gray-600 mb-6 text-sm">Choose how you want to populate the new category <strong>"{categoryFormData.name}"</strong>.</p>
             
@@ -538,25 +573,36 @@ export default function Menus() {
                     ))}
                   </div>
                   <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                    <button onClick={() => handleCategoryOption('generate')} disabled={selectedSuggestedProducts.length === 0} className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 disabled:bg-gray-300 font-medium text-sm transition-colors">
-                      Add Selected Products
+                    <button onClick={() => handleCategoryOption('generate')} disabled={selectedSuggestedProducts.length === 0 || isCreatingCategory} className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 disabled:bg-gray-300 font-medium text-sm transition-colors flex items-center justify-center">
+                      {isCreatingCategory ? (
+                        <span className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Creating...
+                        </span>
+                      ) : 'Add Selected Products'}
                     </button>
-                    <button onClick={handleGenerateMore} className="flex-1 border border-gray-300 text-gray-600 py-2 rounded-lg hover:bg-gray-100 font-medium text-sm transition-colors">
-                      Generate More with AI
+                    <button onClick={handleGenerateMore} disabled={isGenerating || isCreatingCategory} className="flex-1 border border-gray-300 text-gray-600 py-2 rounded-lg hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50">
+                      {isGenerating ? 'Generating...' : 'Generate More with AI'}
                     </button>
                   </div>
                 </div>
               ) : (
-                <button onClick={() => handleCategoryOption('generate')} className="w-full text-left p-4 border rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors flex flex-col">
-                  <span className="font-bold text-gray-800">Generate Products with AI</span>
+                <button onClick={() => handleCategoryOption('generate')} disabled={isCreatingCategory} className="w-full text-left p-4 border rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors flex flex-col disabled:opacity-50">
+                  <span className="font-bold text-gray-800 flex items-center gap-2">
+                    {isCreatingCategory && <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>}
+                    {isCreatingCategory ? 'Creating category...' : 'Generate Products with AI'}
+                  </span>
                   <span className="text-xs text-gray-500 mt-1">Automatically generate relevant products based on the category name.</span>
                 </button>
               )}
 
               {suggestedProducts.length > 0 && <div className="text-center text-sm text-gray-400 font-medium my-1">OR</div>}
 
-              <button onClick={() => handleCategoryOption('empty')} className="w-full text-left p-4 border rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors flex flex-col">
-                <span className="font-bold text-gray-800">Create Empty Category</span>
+              <button onClick={() => handleCategoryOption('empty')} disabled={isCreatingCategory} className="w-full text-left p-4 border rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors flex flex-col disabled:opacity-50">
+                <span className="font-bold text-gray-800 flex items-center gap-2">
+                  {isCreatingCategory && <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>}
+                  {isCreatingCategory ? 'Creating category...' : 'Create Empty Category'}
+                </span>
                 <span className="text-xs text-gray-500 mt-1">Create the category now and add products later.</span>
               </button>
 
@@ -565,10 +611,11 @@ export default function Menus() {
                   <span className="font-bold text-gray-800">Import from Existing Types</span>
                   <button 
                     onClick={() => handleCategoryOption('import')} 
-                    disabled={!selectedImportCategory}
-                    className="bg-orange-600 text-white px-3 py-1 text-sm rounded-md hover:bg-orange-700 disabled:bg-gray-300"
+                    disabled={!selectedImportCategory || isCreatingCategory}
+                    className="bg-orange-600 text-white px-3 py-1 text-sm rounded-md hover:bg-orange-700 disabled:bg-gray-300 flex items-center gap-2"
                   >
-                    Import
+                    {isCreatingCategory && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                    {isCreatingCategory ? 'Importing...' : 'Import'}
                   </button>
                 </div>
                 <span className="text-xs text-gray-500 mb-2">Duplicate products from an existing category.</span>
@@ -576,20 +623,24 @@ export default function Menus() {
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-orange-500 text-sm"
                   value={selectedImportCategory}
                   onChange={(e) => setSelectedImportCategory(e.target.value)}
+                  disabled={isCreatingCategory}
                 >
                   <option value="">-- Select Category to Import From --</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
 
-              <button onClick={() => handleCategoryOption('manual')} className="w-full text-left p-4 border rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors flex flex-col">
-                <span className="font-bold text-gray-800">Add Products Manually</span>
+              <button onClick={() => handleCategoryOption('manual')} disabled={isCreatingCategory} className="w-full text-left p-4 border rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors flex flex-col disabled:opacity-50">
+                <span className="font-bold text-gray-800 flex items-center gap-2">
+                  {isCreatingCategory && <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>}
+                  {isCreatingCategory ? 'Creating category...' : 'Add Products Manually'}
+                </span>
                 <span className="text-xs text-gray-500 mt-1">Create category and immediately open the form to add a new product.</span>
               </button>
             </div>
 
             <div className="pt-6 flex justify-end">
-              <button onClick={() => handleCategoryOption('cancel')} className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50 transition-colors w-full">
+              <button onClick={() => handleCategoryOption('cancel')} disabled={isCreatingCategory} className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50 transition-colors w-full disabled:opacity-50">
                 Cancel
               </button>
             </div>
