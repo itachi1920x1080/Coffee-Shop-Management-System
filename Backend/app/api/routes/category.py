@@ -60,6 +60,8 @@ def update_category(
 
     return crud_category.update_category(db, db_category=category, category_in=category_in)
 
+from sqlalchemy.exc import IntegrityError
+
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_category(
     category_id: int, 
@@ -69,5 +71,12 @@ def delete_category(
     category = crud_category.get_category(db, category_id=category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    crud_category.delete_category(db, db_category=category)
+    try:
+        crud_category.delete_category(db, db_category=category)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot delete this category because it contains existing menu items. Please delete or reassign the menu items first."
+        )
     return None

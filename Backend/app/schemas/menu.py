@@ -1,6 +1,6 @@
-from unicodedata import category
 from pydantic import BaseModel
 from typing import Optional
+from app.schemas.category import CategoryResponse
 
 class MenuBase(BaseModel):
     code:str
@@ -10,7 +10,7 @@ class MenuBase(BaseModel):
     description:Optional[str]=None
     status:bool=True 
 
-class   MenuCreate(MenuBase):
+class MenuCreate(MenuBase):
     pass
 class MenuUpdate(BaseModel):
     code: Optional[str] = None
@@ -22,6 +22,6 @@ class MenuUpdate(BaseModel):
 class MenuResponse(MenuBase):
     id:int
     image:Optional[str]=None   
+    category: Optional[CategoryResponse] = None
     class Config:
         from_attributes = True
-          

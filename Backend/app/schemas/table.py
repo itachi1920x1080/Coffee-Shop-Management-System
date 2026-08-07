@@ -4,6 +4,7 @@ from typing import Optional
 class TableBase(BaseModel):
     number: str
     capacity: int
+    floor: str = "Ground Floor"
     # Regex pattern ធានាថាស្ថានភាព (status) គឺពិតជាពាក្យមួយក្នុងចំណោមពាក្យទាំងនេះ
     status: Optional[str] = Field(default="Available", pattern="^(Available|Occupied|Reserved)$")
 
@@ -13,6 +14,7 @@ class TableCreate(TableBase):
 class TableUpdate(BaseModel):
     number: Optional[str] = None
     capacity: Optional[int] = None
+    floor: Optional[str] = None
     status: Optional[str] = Field(default=None, pattern="^(Available|Occupied|Reserved)$")
 
 class TableResponse(TableBase):
