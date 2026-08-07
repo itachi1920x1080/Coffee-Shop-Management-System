@@ -4,6 +4,8 @@ from pydantic import BaseModel
 class CategoryBase(BaseModel):
     name: str
     description: Optional[str] = None
+    icon: Optional[str] = None
+    status: Optional[str] = "Active"
 
 class CategoryCreate(CategoryBase):
     pass
@@ -11,6 +13,8 @@ class CategoryCreate(CategoryBase):
 class CategoryUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    icon: Optional[str] = None
+    status: Optional[str] = None
     
 class CategoryResponse(CategoryBase):
     id: int

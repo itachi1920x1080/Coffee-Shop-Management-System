@@ -3,6 +3,29 @@ import api from '../api/axios';
 import { Plus, Edit, Trash2, X, Search, Layers } from 'lucide-react';
 
 export default function Menus() {
+  const DRINK_CATEGORIES = [
+    { name: "Hot Coffee", icon: "☕" },
+    { name: "Iced Coffee", icon: "🧊" },
+    { name: "Milk Tea", icon: "🥛" },
+    { name: "Tea", icon: "🍵" },
+    { name: "Bubble Tea", icon: "🧋" },
+    { name: "Soft Drinks", icon: "🥤" },
+    { name: "Water", icon: "💧" },
+    { name: "Juice", icon: "🧃" },
+    { name: "Smoothies", icon: "🍓" },
+    { name: "Frappes", icon: "🥭" },
+    { name: "Milk Drinks", icon: "🥛" },
+    { name: "Chocolate Drinks", icon: "🍫" },
+    { name: "Energy Drinks", icon: "⚡" },
+    { name: "Alcoholic Drinks (optional)", icon: "🍺" },
+    { name: "Mocktails", icon: "🍹" },
+    { name: "Cocktails (optional)", icon: "🍸" },
+    { name: "Soda", icon: "🥤" },
+    { name: "Lemonade", icon: "🍋" },
+    { name: "Coconut Drinks", icon: "🥥" },
+    { name: "Specialty Drinks", icon: "🍶" }
+  ];
+
   const [activeTab, setActiveTab] = useState('menus');
   const [menus, setMenus] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -31,7 +54,7 @@ export default function Menus() {
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [categoryFormData, setCategoryFormData] = useState({
-    name: '', description: ''
+    name: '', description: '', icon: '', status: 'Active'
   });
 
   useEffect(() => {
@@ -153,12 +176,14 @@ export default function Menus() {
       setCurrentCategoryId(category.id);
       setCategoryFormData({
         name: category.name,
-        description: category.description || ''
+        description: category.description || '',
+        icon: category.icon || '',
+        status: category.status || 'Active'
       });
     } else {
       setIsCategoryEditMode(false);
       setCurrentCategoryId(null);
-      setCategoryFormData({ name: '', description: '' });
+      setCategoryFormData({ name: '', description: '', icon: '', status: 'Active' });
     }
     setIsCategoryModalOpen(true);
   };
@@ -286,10 +311,10 @@ export default function Menus() {
           }
       } 
       
-      alert('✅ Category created successfully!');
+      alert('Category and products have been created successfully.');
       setIsCategoryOptionsModalOpen(false);
-      setCategoryFormData({ name: '', description: '' });
-      setSuggestedProducts([]);
+      setCategoryFormData({ name: '', description: '', icon: '☕', status: 'Active' });
+      setCategoryModalStep(1);
       fetchData();
       
     } catch (error) {
@@ -583,9 +608,53 @@ export default function Menus() {
               {isCategoryEditMode ? 'Edit Category' : 'Add New Category'}
             </h2>
             <form onSubmit={handleNextCategory} className="space-y-4">
+              <div className="grid grid-cols-4 gap-4">
+                <div className="col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                  <input 
+                    type="text" 
+                    list="category-suggestions"
+                    className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" 
+                    value={categoryFormData.name} 
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      const found = DRINK_CATEGORIES.find(c => c.name === name);
+                      setCategoryFormData(prev => ({
+                        ...prev, 
+                        name,
+                        icon: found ? found.icon : prev.icon
+                      }));
+                    }} 
+                    placeholder="e.g. Hot Coffee"
+                  />
+                  <datalist id="category-suggestions">
+                    {DRINK_CATEGORIES.map(c => (
+                      <option key={c.name} value={c.name} />
+                    ))}
+                  </datalist>
+                </div>
+                <div className="col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 text-center" 
+                    value={categoryFormData.icon} 
+                    onChange={(e) => setCategoryFormData({...categoryFormData, icon: e.target.value})} 
+                    placeholder="☕"
+                  />
+                </div>
+              </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                <input type="text" className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={categoryFormData.name} onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select 
+                  className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 bg-white"
+                  value={categoryFormData.status}
+                  onChange={(e) => setCategoryFormData({...categoryFormData, status: e.target.value})}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1">
