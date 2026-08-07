@@ -176,7 +176,7 @@ export default function POS() {
   return (
     <div className="flex h-full gap-6 relative">
       {/* ផ្នែកខាងឆ្វេង៖ បញ្ជីមុខម្ហូប */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Point of Sale</h1>
           <div className="relative max-w-sm w-full">
