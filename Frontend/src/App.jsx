@@ -9,6 +9,7 @@ import TablesCustomers from './pages/TablesCustomers';
 import Reports from './pages/Reports';
 import Expenses from './pages/Expenses';
 import Orders from './pages/Orders';
+import Staff from './pages/Staff';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/menus" element={<Menus />} />
           <Route path="/customers" element={<TablesCustomers />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/staff" element={<Staff />} />
           <Route path="/reports" element={<Reports />} />
         </Route>
       </Route>

@@ -5,3 +5,4 @@ venv/
 uploads/images/*
 !uploads/images/.gitkeep
 test_env.py
+test.py

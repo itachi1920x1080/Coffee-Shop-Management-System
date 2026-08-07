@@ -1,14 +1,48 @@
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Coffee, Users, LogOut, Receipt, FileText, DollarSign } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Coffee, Users, LogOut, Receipt, FileText, DollarSign, UserCog } from 'lucide-react';
+import api from '../api/axios';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        // If 401, they might be logged out
+      }
+    };
+    fetchUser();
+  }, []);
+
+  // Redirect Cashiers away from Dashboard
+  useEffect(() => {
+    if (user?.role === 'cashier' && location.pathname === '/dashboard') {
+      navigate('/pos', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
+
+  // Redirect non-Admins away from Staff Management
+  useEffect(() => {
+    if (user && user.role !== 'admin' && location.pathname === '/staff') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     navigate('/login');
   };
+
+  const isCashier = user?.role === 'cashier';
+  const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'manager';
 
   const NavLink = ({ to, icon: Icon, label }) => {
     const isActive = location.pathname.startsWith(to);
@@ -35,13 +69,29 @@ export default function DashboardLayout() {
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <NavLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+          {/* Everyone except Cashier gets Dashboard */}
+          {!isCashier && (
+            <NavLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+          )}
+          
+          {/* Everyone gets POS and Orders */}
           <NavLink to="/pos" icon={ShoppingCart} label="Point of Sale" />
           <NavLink to="/orders" icon={FileText} label="Order History" />
-          <NavLink to="/menus" icon={Coffee} label="Menus & Categories" />
-          <NavLink to="/customers" icon={Users} label="Customers & Tables" />
-          <NavLink to="/expenses" icon={DollarSign} label="Expenses" />
-          <NavLink to="/reports" icon={Receipt} label="Reports" />
+
+          {/* Management features hidden from Cashier */}
+          {!isCashier && (
+            <>
+              <NavLink to="/menus" icon={Coffee} label="Menus & Categories" />
+              <NavLink to="/customers" icon={Users} label="Customers & Tables" />
+              <NavLink to="/expenses" icon={DollarSign} label="Expenses" />
+              <NavLink to="/reports" icon={Receipt} label="Reports" />
+            </>
+          )}
+
+          {/* Admin strictly only features */}
+          {isAdmin && (
+            <NavLink to="/staff" icon={UserCog} label="Staff Management" />
+          )}
         </nav>
 
         <div className="p-4 border-t">
@@ -58,12 +108,16 @@ export default function DashboardLayout() {
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
         <header className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800">Management System</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            {isCashier ? "Point of Sale" : "Management System"}
+          </h2>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 font-bold">
-              A
+            <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 font-bold uppercase">
+              {user ? user.username.charAt(0) : 'U'}
             </div>
-            <span className="text-sm font-medium text-gray-700">Admin User</span>
+            <span className="text-sm font-medium text-gray-700 capitalize">
+              {user ? `${user.username} (${user.role})` : 'Loading...'}
+            </span>
           </div>
         </header>
 

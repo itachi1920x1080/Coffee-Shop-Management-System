@@ -1,10 +1,19 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 # Data required to create a new user
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
     password: str
+    role: Optional[str] = "cashier"
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
 
 # Data returned to the frontend (password excluded!)
 class UserResponse(BaseModel):
