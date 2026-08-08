@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.db.database import engine, Base, get_db
 
 # 1. Import Models (ដើម្បីឲ្យ SQLAlchemy បង្កើតតារាង)
-from app.models import user, category, menu, table, customer, order, payment 
+from app.models import user, category, menu, table, customer, order, payment, inventory 
 # 2. Import Routers (បំបែកមួយជួរៗដើម្បីកុំឲ្យច្រឡំ)
 from app.api.routes import auth
 from app.api.routes import category as category_route
@@ -22,6 +22,7 @@ from app.api.routes import expense as expense_route
 from app.api.routes import report as report_route
 from app.api.routes import ai as ai_route
 from app.api.routes import user as user_route
+from app.api.routes import inventory as inventory_route
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Coffee Shop API")
@@ -60,6 +61,8 @@ app.include_router(expense_route.router, prefix="/expenses", tags=["Expenses"])
 app.include_router(report_route.router, prefix="/reports", tags=["Reports"])
 app.include_router(ai_route.router, prefix="/ai", tags=["AI Generation"])
 app.include_router(user_route.router, prefix="/users", tags=["Users (Staff)"])
+app.include_router(inventory_route.router, prefix="/inventory", tags=["Inventory"])
+
 
 @app.get("/")
 def read_root():

@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.schemas.user import UserCreate, UserResponse, Token
+from app.schemas.user import UserCreate, UserResponse, Token, UserUpdate
 from app.crud import crud_user
 from app.core.security import verify_password, create_access_token
 from app.core.config import settings
@@ -45,3 +45,19 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.get("/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.put("/me", response_model=UserResponse)
+def update_users_me(
+    user_in: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if user_in.username and user_in.username != current_user.username:
+        if crud_user.get_user_by_username(db, username=user_in.username):
+            raise HTTPException(status_code=400, detail="Username already taken")
+            
+    if user_in.email and user_in.email != current_user.email:
+        if crud_user.get_user_by_email(db, email=user_in.email):
+            raise HTTPException(status_code=400, detail="Email already registered")
+
+    return crud_user.update_user(db, db_user=current_user, user_in=user_in)

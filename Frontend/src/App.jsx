@@ -10,6 +10,8 @@ import Reports from './pages/Reports';
 import Expenses from './pages/Expenses';
 import Orders from './pages/Orders';
 import Staff from './pages/Staff';
+import Profile from './pages/Profile';
+import Inventory from './pages/Inventory';
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/staff" element={<Staff />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/inventory" element={<Inventory />} />
         </Route>
       </Route>
     </Routes>

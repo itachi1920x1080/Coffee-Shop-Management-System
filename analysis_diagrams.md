@@ -19,6 +19,7 @@ graph TD
             OrderPay["🛒 Orders & Payments"]
             TableCust["🪑 Tables & Customers"]
             ReportDash["📊 Reports & Dashboard"]
+            InventoryMod["📦 Inventory & Stock"]
         end
     end
     
@@ -31,12 +32,14 @@ graph TD
     API_Gateway --> OrderPay
     API_Gateway --> TableCust
     API_Gateway --> ReportDash
+    API_Gateway --> InventoryMod
     
     Auth_Mod --> DB
     CatMenu --> DB
     OrderPay --> DB
     TableCust --> DB
     ReportDash --> DB
+    InventoryMod --> DB
 ```
 
 ---
@@ -109,6 +112,16 @@ erDiagram
         float amount
         date expense_date
     }
+    
+    INVENTORY {
+        int id PK
+        string item_name
+        string category
+        float quantity
+        string unit
+        float min_stock_level
+        datetime last_updated
+    }
 ```
 
 ---
@@ -121,9 +134,11 @@ mindmap
   root((Coffee Shop API))
     Security
       (/auth) Login & Registration
-    Inventory
+      (/users) Staff Management
+    Catalog & Inventory
       (/categories) Manage Categories
       (/menus) Manage Food & Drinks
+      (/inventory) Stock Management
     Operations
       (/tables) Table Status
       (/customers) Customer CRM

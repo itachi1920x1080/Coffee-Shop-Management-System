@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Coffee, Users, LogOut, Receipt, FileText, DollarSign, UserCog } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Coffee, Users, LogOut, Receipt, FileText, DollarSign, UserCog, TrendingDown, Package } from 'lucide-react';
 import api from '../api/axios';
 
 export default function DashboardLayout() {
@@ -63,7 +63,7 @@ export default function DashboardLayout() {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r shadow-sm flex flex-col">
+      <aside className="w-64 bg-white border-r shadow-sm flex flex-col print:hidden">
         <div className="p-6 border-b text-center">
           <h1 className="text-2xl font-bold text-orange-600">☕ Coffee POS</h1>
         </div>
@@ -83,7 +83,8 @@ export default function DashboardLayout() {
             <>
               <NavLink to="/menus" icon={Coffee} label="Menus & Categories" />
               <NavLink to="/customers" icon={Users} label="Customers & Tables" />
-              <NavLink to="/expenses" icon={DollarSign} label="Expenses" />
+              <NavLink to="/inventory" icon={Package} label="Inventory" />
+              <NavLink to="/expenses" icon={TrendingDown} label="Expenses" />
               <NavLink to="/reports" icon={Receipt} label="Reports" />
             </>
           )}
@@ -107,18 +108,18 @@ export default function DashboardLayout() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
+        <header className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center print:hidden">
           <h2 className="text-xl font-semibold text-gray-800">
             {isCashier ? "Point of Sale" : "Management System"}
           </h2>
-          <div className="flex items-center gap-3">
+          <Link to="/profile" className="flex items-center gap-3 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
             <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 font-bold uppercase">
               {user ? user.username.charAt(0) : 'U'}
             </div>
             <span className="text-sm font-medium text-gray-700 capitalize">
               {user ? `${user.username} (${user.role})` : 'Loading...'}
             </span>
-          </div>
+          </Link>
         </header>
 
         {/* Dynamic Page Content */}
