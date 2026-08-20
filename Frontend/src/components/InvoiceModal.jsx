@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Printer, X } from 'lucide-react';
 
-export default function InvoiceModal({ order, onClose }) {
+export default function InvoiceModal({ order, cashierName = 'Unknown', onClose }) {
   const printRef = useRef();
 
   if (!order) return null;
@@ -65,6 +65,10 @@ export default function InvoiceModal({ order, onClose }) {
                 <span className="font-bold">{order.order_number}</span>
               </div>
               <div className="flex justify-between mb-1">
+                <span>Cashier:</span>
+                <span className="font-medium capitalize">{cashierName}</span>
+              </div>
+              <div className="flex justify-between mb-1">
                 <span>Date:</span>
                 <span>{new Date(order.created_at).toLocaleString()}</span>
               </div>
@@ -90,6 +94,15 @@ export default function InvoiceModal({ order, onClose }) {
                     <td className="py-1 text-right">${item.subtotal?.toFixed(2)}</td>
                   </tr>
                 ))}
+                {order.booking_id && (
+                  <tr>
+                    <td className="py-1 truncate max-w-[120px]">Room Booking</td>
+                    <td className="py-1 text-center">1</td>
+                    <td className="py-1 text-right">
+                      ${(order.total_amount - (order.items?.reduce((sum, item) => sum + (item.subtotal || 0), 0) || 0)).toFixed(2)}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
             

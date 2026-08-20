@@ -27,6 +27,7 @@ class OrderItemResponse(OrderItemBase):
 class OrderBase(BaseModel):
     table_id: Optional[int] = None
     customer_id: Optional[int] = None
+    booking_id: Optional[int] = None
 
 class OrderCreate(OrderBase):
     items: List[OrderItemCreate] # Allows creating an order with items immediately

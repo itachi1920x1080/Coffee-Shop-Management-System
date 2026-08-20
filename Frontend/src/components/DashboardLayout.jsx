@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Coffee, Users, LogOut, Receipt, FileText, DollarSign, UserCog, TrendingDown, Package } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Coffee, Users, LogOut, Receipt, FileText, DollarSign, UserCog, TrendingDown, Package, DoorOpen } from 'lucide-react';
 import api from '../api/axios';
 
 export default function DashboardLayout() {
@@ -23,14 +23,14 @@ export default function DashboardLayout() {
 
   // Redirect Cashiers away from Dashboard
   useEffect(() => {
-    if (user?.role === 'cashier' && location.pathname === '/dashboard') {
+    if (user?.role?.toLowerCase() === 'cashier' && location.pathname === '/dashboard') {
       navigate('/pos', { replace: true });
     }
   }, [user, location.pathname, navigate]);
 
   // Redirect non-Admins away from Staff Management
   useEffect(() => {
-    if (user && user.role !== 'admin' && location.pathname === '/staff') {
+    if (user && user.role?.toLowerCase() !== 'admin' && location.pathname === '/staff') {
       navigate('/dashboard', { replace: true });
     }
   }, [user, location.pathname, navigate]);
@@ -40,9 +40,9 @@ export default function DashboardLayout() {
     navigate('/login');
   };
 
-  const isCashier = user?.role === 'cashier';
-  const isAdmin = user?.role === 'admin';
-  const isManager = user?.role === 'manager';
+  const isCashier = user?.role?.toLowerCase() === 'cashier';
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
+  const isManager = user?.role?.toLowerCase() === 'manager';
 
   const NavLink = ({ to, icon: Icon, label }) => {
     const isActive = location.pathname.startsWith(to);
@@ -77,13 +77,14 @@ export default function DashboardLayout() {
           {/* Everyone gets POS and Orders */}
           <NavLink to="/pos" icon={ShoppingCart} label="Point of Sale" />
           <NavLink to="/orders" icon={FileText} label="Order History" />
+          <NavLink to="/workspace" icon={DoorOpen} label="Workspaces" />
+          <NavLink to="/inventory" icon={Package} label="Inventory" />
 
           {/* Management features hidden from Cashier */}
           {!isCashier && (
             <>
               <NavLink to="/menus" icon={Coffee} label="Menus & Categories" />
               <NavLink to="/customers" icon={Users} label="Customers & Tables" />
-              <NavLink to="/inventory" icon={Package} label="Inventory" />
               <NavLink to="/expenses" icon={TrendingDown} label="Expenses" />
               <NavLink to="/reports" icon={Receipt} label="Reports" />
             </>

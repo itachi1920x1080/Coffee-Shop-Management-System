@@ -13,6 +13,11 @@ def get_orders(db: Session, skip: int = 0, limit: int = 100):
 def recalculate_total(db: Session, order_id: int):
     order = get_order(db, order_id)
     total = sum(item.subtotal for item in order.items)
+    
+    # Add booking price if a booking is attached
+    if order.booking_id and order.booking:
+        total += order.booking.total_price
+
     order.total_amount = total
     db.commit()
     db.refresh(order)
@@ -25,7 +30,8 @@ def create_order(db: Session, order_in: OrderCreate):
     db_order = Order(
         order_number=order_num,
         table_id=order_in.table_id,
-        customer_id=order_in.customer_id
+        customer_id=order_in.customer_id,
+        booking_id=order_in.booking_id
     )
     db.add(db_order)
     db.flush() # Saves to DB to get the ID, but doesn't fully commit yet

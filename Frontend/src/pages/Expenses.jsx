@@ -180,18 +180,15 @@ export default function Expenses() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
                   <input 
-                    type="text"
-                    inputMode="decimal"
+                    type="number"
+                    step="any"
+                    min="0"
                     required
                     placeholder="0.00"
                     className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
                     value={formData.amount}
                     onChange={(e) => {
-                      let val = e.target.value.replace(/[^0-9.]/g, '');
-                      // Prevent multiple decimals
-                      if ((val.match(/\./g) || []).length > 1) {
-                        val = val.substring(0, val.length - 1);
-                      }
+                      const val = e.target.value;
                       const parsed = parseFloat(val);
                       setFormData({
                         ...formData, 
@@ -204,13 +201,14 @@ export default function Expenses() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Amount (៛)</label>
                   <input 
-                    type="text"
-                    inputMode="numeric"
+                    type="number"
+                    step="any"
+                    min="0"
                     placeholder="0"
                     className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
                     value={formData.amount_riel}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      const val = e.target.value;
                       const parsed = parseInt(val, 10);
                       setFormData({
                         ...formData, 

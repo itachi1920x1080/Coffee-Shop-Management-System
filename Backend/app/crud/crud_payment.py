@@ -48,6 +48,12 @@ def process_payment(db: Session, payment_in: PaymentCreate):
 
     # 5. ផ្លាស់ប្តូរស្ថានភាព Order ទៅជា Paid
     order.status = "Paid"
+    
+    # 5.5. បើមានភ្ជាប់ជាមួយការកក់បន្ទប់ (Booking) ឲ្យវាទៅជា Paid ដែរ
+    if order.booking_id and order.booking:
+        order.booking.payment_status = "Paid"
+        order.booking.payment_note = "Paid together with coffee order"
+
     db.add(order)
 
     # 6. Save ចូល Database

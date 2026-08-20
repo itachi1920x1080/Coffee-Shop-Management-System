@@ -12,6 +12,7 @@ import Orders from './pages/Orders';
 import Staff from './pages/Staff';
 import Profile from './pages/Profile';
 import Inventory from './pages/Inventory';
+import Bookings from './pages/Bookings';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/inventory" element={<Inventory />} />
+          <Route path="/workspace" element={<Bookings />} />
         </Route>
       </Route>
     </Routes>

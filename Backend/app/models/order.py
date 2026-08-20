@@ -10,6 +10,7 @@ class Order(Base):
     order_number = Column(String(50), unique=True, index=True, nullable=False)
     table_id = Column(Integer, ForeignKey("tables.id"), nullable=True)
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=True)
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=True)
     total_amount = Column(Float, default=0.0)
     status = Column(String(20), default="Pending") # Pending, Paid, Cancelled
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -18,6 +19,7 @@ class Order(Base):
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     table = relationship("Table")
     customer = relationship("Customer")
+    booking = relationship("Booking")
 
 class OrderItem(Base):
     __tablename__ = "order_items"

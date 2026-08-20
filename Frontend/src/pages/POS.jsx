@@ -12,6 +12,13 @@ export default function POS() {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Bookings state
+  const [unpaidBookings, setUnpaidBookings] = useState([]);
+  const [selectedBookingId, setSelectedBookingId] = useState('');
+  
+  // Cashier state
+  const [cashierName, setCashierName] = useState('Unknown');
 
   // States សម្រាប់ផ្ទាំង Checkout Modal
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -25,11 +32,18 @@ export default function POS() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [menusRes, categoriesRes] = await Promise.all([
+        const [menusRes, categoriesRes, bookingsRes, userRes] = await Promise.all([
           api.get('/menus/'),
-          api.get('/categories/')
+          api.get('/categories/'),
+          api.get('/workspace/bookings'),
+          api.get('/auth/me').catch(() => ({ data: { username: 'Unknown' } }))
         ]);
         setMenus(menusRes.data);
+        setCashierName(userRes.data.username);
+        
+        // Filter unpaid bookings
+        const activeUnpaidBookings = bookingsRes.data.filter(b => b.payment_status !== 'Paid' && b.status !== 'Cancelled');
+        setUnpaidBookings(activeUnpaidBookings);
         
         const recommendedOrder = [
           "Hot Coffee", "Iced Coffee", "Tea", "Bubble Tea", "Milk Drinks", 
@@ -90,7 +104,11 @@ export default function POS() {
     setCart((prevCart) => prevCart.filter((item) => item.id !== id));
   };
 
-  const totalAmount = cart.reduce((total, item) => total + item.price * (parseInt(item.quantity) || 0), 0);
+  const selectedBooking = unpaidBookings.find(b => b.id === parseInt(selectedBookingId));
+  const bookingTotal = selectedBooking ? selectedBooking.total_price : 0;
+  
+  const cartTotal = cart.reduce((total, item) => total + item.price * (parseInt(item.quantity) || 0), 0);
+  const totalAmount = cartTotal + bookingTotal;
   
   const EXCHANGE_RATE = 4100;
   let receivedInUSD = 0;
@@ -142,12 +160,10 @@ export default function POS() {
     try {
       // ១. បង្កើត Order សិន
       const orderData = {
-        total_price: totalAmount,
-        status: "Completed",
+        booking_id: selectedBookingId ? parseInt(selectedBookingId) : null,
         items: cart.map(item => ({
           menu_id: item.id,
-          quantity: item.quantity,
-          unit_price: item.price
+          quantity: item.quantity
         }))
       };
       const orderResponse = await api.post('/orders/', orderData);
@@ -311,12 +327,42 @@ export default function POS() {
         </div>
 
         <div className="p-4 border-t bg-gray-50 rounded-b-xl">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-600 font-medium">Total Amount:</span>
+          {unpaidBookings.length > 0 && (
+            <div className="mb-4 bg-white p-3 rounded-lg border shadow-sm">
+              <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
+                Attach Room Booking
+              </label>
+              <select
+                className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block p-2"
+                value={selectedBookingId}
+                onChange={(e) => setSelectedBookingId(e.target.value)}
+              >
+                <option value="">None</option>
+                {unpaidBookings.map(b => (
+                  <option key={b.id} value={b.id}>
+                    Room {b.room_id} - {b.customer_name} (+${b.total_price.toFixed(2)})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-gray-500 text-sm">Cart Total:</span>
+            <span className="font-semibold text-gray-800">${cartTotal.toFixed(2)}</span>
+          </div>
+          {bookingTotal > 0 && (
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-500 text-sm">Booking Total:</span>
+              <span className="font-semibold text-orange-600">+${bookingTotal.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between items-center mb-4 pt-2 border-t border-gray-200">
+            <span className="text-gray-800 font-bold">Grand Total:</span>
             <span className="text-2xl font-bold text-orange-600">${totalAmount.toFixed(2)}</span>
           </div>
           <button 
-            disabled={cart.length === 0}
+            disabled={cart.length === 0 && !selectedBookingId}
             onClick={() => setIsCheckoutOpen(true)}
             className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
@@ -428,10 +474,11 @@ export default function POS() {
         </div>
       )}
 
-      {/* Invoice Modal for Completed Orders */}
+      {/* ផ្ទាំងវិក្កយបត្រពេល Checkout ជោគជ័យ */}
       {completedOrder && (
         <InvoiceModal 
           order={completedOrder} 
+          cashierName={cashierName}
           onClose={() => setCompletedOrder(null)} 
         />
       )}

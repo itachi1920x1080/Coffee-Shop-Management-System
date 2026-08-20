@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class InventoryBase(BaseModel):
@@ -29,4 +29,19 @@ class InventoryResponse(InventoryBase):
 
     class Config:
         orm_mode = True
+        from_attributes = True
+
+class InventoryLogBase(BaseModel):
+    action: str
+    amount: float
+    previous_quantity: float
+    new_quantity: float
+    performed_by: str
+
+class InventoryLogResponse(InventoryLogBase):
+    id: int
+    inventory_id: int
+    created_at: datetime
+
+    class Config:
         from_attributes = True

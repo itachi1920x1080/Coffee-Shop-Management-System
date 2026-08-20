@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, AlertTriangle, Package, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertTriangle, Package, TrendingUp, TrendingDown, History } from 'lucide-react';
 import api from '../api/axios';
 
 export default function Inventory() {
@@ -7,8 +7,11 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyLogs, setHistoryLogs] = useState([]);
   const [editingItem, setEditingItem] = useState(null);
   const [stockAction, setStockAction] = useState('add'); // 'add' or 'deduct'
+  const [userRole, setUserRole] = useState(null);
   
   const [formData, setFormData] = useState({
     item_name: '',
@@ -28,14 +31,20 @@ export default function Inventory() {
 
   const fetchInventory = async () => {
     try {
-      const response = await api.get('/inventory/');
-      setItems(response.data);
+      const [inventoryRes, userRes] = await Promise.all([
+        api.get('/inventory/'),
+        api.get('/auth/me').catch(() => ({ data: { role: 'cashier' } }))
+      ]);
+      setItems(inventoryRes.data);
+      setUserRole(userRes.data.role);
     } catch (error) {
       console.error('Error fetching inventory:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const isCashier = userRole?.toLowerCase() === 'cashier';
 
   const handleOpenModal = (item = null) => {
     if (item) {
@@ -65,6 +74,18 @@ export default function Inventory() {
     setStockAction(action);
     setStockFormData({ amount: 0 });
     setShowStockModal(true);
+  };
+
+  const handleOpenHistoryModal = async (item) => {
+    setEditingItem(item);
+    setShowHistoryModal(true);
+    try {
+      const response = await api.get(`/inventory/${item.id}/logs`);
+      setHistoryLogs(response.data);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      alert('Failed to fetch history logs');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -109,6 +130,12 @@ export default function Inventory() {
     }
   };
 
+  const defaultCategories = ['Coffee Beans', 'Milk', 'Syrup', 'Cups', 'Packaging', 'Pastry', 'Other'];
+  const defaultUnits = ['kg', 'g', 'liters', 'ml', 'pcs', 'packs', 'boxes'];
+
+  const uniqueCategories = [...new Set([...defaultCategories, ...items.map(item => item.category)])].filter(Boolean);
+  const uniqueUnits = [...new Set([...defaultUnits, ...items.map(item => item.unit)])].filter(Boolean);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -124,12 +151,14 @@ export default function Inventory() {
           <h1 className="text-2xl font-bold text-gray-800">Inventory Management</h1>
           <p className="text-gray-500 mt-1">Manage stock levels, ingredients, and supplies.</p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2"
-        >
-          <Plus size={20} /> Add Item
-        </button>
+        {!isCashier && (
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2"
+          >
+            <Plus size={20} /> Add Item
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden flex-1">
@@ -148,7 +177,7 @@ export default function Inventory() {
             <tbody>
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-gray-500">
+                  <td colSpan={isCashier ? "5" : "6"} className="p-8 text-center text-gray-500">
                     <Package size={48} className="mx-auto mb-3 text-gray-300" />
                     <p>No inventory items found.</p>
                   </td>
@@ -191,21 +220,33 @@ export default function Inventory() {
                         >
                           <TrendingDown size={18} />
                         </button>
-                        <div className="w-px h-6 bg-gray-200 mx-1"></div>
-                        <button
-                          onClick={() => handleOpenModal(item)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Edit Item"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Item"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        
+                        {!isCashier && (
+                          <>
+                            <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                            <button
+                              onClick={() => handleOpenHistoryModal(item)}
+                              className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              title="History Logs"
+                            >
+                              <History size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleOpenModal(item)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Edit Item"
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete Item"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -241,11 +282,15 @@ export default function Inventory() {
                 <input
                   type="text"
                   required
+                  list="category-list"
                   placeholder="e.g., Beans, Milk, Cups"
                   className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 />
+                <datalist id="category-list">
+                  {uniqueCategories.map(cat => <option key={cat} value={cat} />)}
+                </datalist>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -265,11 +310,15 @@ export default function Inventory() {
                   <input
                     type="text"
                     required
+                    list="unit-list"
                     placeholder="e.g., kg, liters, pcs"
                     className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                   />
+                  <datalist id="unit-list">
+                    {uniqueUnits.map(unit => <option key={unit} value={unit} />)}
+                  </datalist>
                 </div>
               </div>
               <div>
@@ -360,6 +409,73 @@ export default function Inventory() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* History Logs Modal */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800">
+                <History className="text-purple-600" />
+                Stock History: {editingItem?.item_name}
+              </h2>
+              <button onClick={() => setShowHistoryModal(false)} className="text-gray-500 hover:text-gray-700">
+                &times;
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 flex-1">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-600">
+                    <th className="p-3 rounded-tl-lg font-medium">Date & Time</th>
+                    <th className="p-3 font-medium">Action</th>
+                    <th className="p-3 font-medium">Amount</th>
+                    <th className="p-3 font-medium">Previous</th>
+                    <th className="p-3 font-medium">New</th>
+                    <th className="p-3 rounded-tr-lg font-medium">By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="p-8 text-center text-gray-500">
+                        No history logs found for this item.
+                      </td>
+                    </tr>
+                  ) : (
+                    historyLogs.map((log) => (
+                      <tr key={log.id} className="border-b last:border-0 hover:bg-gray-50">
+                        <td className="p-3 text-gray-700 whitespace-nowrap">
+                          {new Date(log.created_at).toLocaleString()}
+                        </td>
+                        <td className="p-3">
+                          {log.action === 'add' ? (
+                            <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs font-semibold uppercase">Add</span>
+                          ) : (
+                            <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded text-xs font-semibold uppercase">Deduct</span>
+                          )}
+                        </td>
+                        <td className="p-3 font-bold text-gray-800">{log.amount}</td>
+                        <td className="p-3 text-gray-600">{log.previous_quantity}</td>
+                        <td className="p-3 text-gray-600">{log.new_quantity}</td>
+                        <td className="p-3 text-gray-500">{log.performed_by}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="p-4 border-t bg-gray-50 text-right">
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
